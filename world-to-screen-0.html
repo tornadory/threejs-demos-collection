@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Wolrd to Screen Demo</title>
+    <script src="js/three.min.js"></script>
+    <script src="js/controls/OrbitControls.js"></script>
+    <style>
+    .myDiv {
+        color: yellow;
+        position: absolute;
+    }
+    </style>
+</head>
+<body>
+    <div class="myDiv">
+        Bill Board
+    </div>
+<script>
+    var scene, renderer, camera, control;
+    var divElem, divObj;
+    var offset = 20;
+
+    init();
+    animate();
+
+    function init()
+    {
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); 
+        camera.position.z = 200;
+        
+        renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+        
+        control = new THREE.OrbitControls(camera, renderer.domElement);
+        control.addEventListener('change', function() {
+            onCameraChange();
+        });
+        
+        var sphereGeo = new THREE.SphereGeometry(5, 32, 32);
+        var sphereMesh = new THREE.Mesh(sphereGeo);
+        scene.add(sphereMesh);
+        
+        divElem = document.getElementsByClassName('myDiv')[0];
+        divObj = new THREE.Object3D();
+        divObj.position = sphereGeo.vertices[0].clone();
+        scene.add(divObj);
+    }
+
+    function animate()
+    {
+        requestAnimationFrame( animate );
+        update();
+        render();
+    }
+
+    function update()
+    {
+        control.update();
+    }
+
+    function render()
+    {
+        renderer.render(scene, camera);
+    }
+
+    function onCameraChange()
+    {
+        var proj = toScreenPosition(divObj, camera);
+        
+        divElem.style.left = proj.x + offset + 'px';
+        divElem.style.top = proj.y + offset + 'px';
+        
+    }
+
+    function toScreenPosition(obj, camera)
+    {
+        var vector = new THREE.Vector3();
+        
+        // TODO: need to update this when resize window
+        var widthHalf = 0.5*renderer.context.canvas.width;
+        var heightHalf = 0.5*renderer.context.canvas.height;
+        
+        obj.updateMatrixWorld();
+        vector.setFromMatrixPosition(obj.matrixWorld);
+        vector.project(camera);
+        
+        vector.x = ( vector.x * widthHalf ) + widthHalf;
+        vector.y = - ( vector.y * heightHalf ) + heightHalf;
+        
+        return { 
+            x: vector.x,
+            y: vector.y
+        };
+
+    }
+</script>
+</body>
+</html>
